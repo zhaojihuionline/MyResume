@@ -12,13 +12,14 @@ networks:
 volumes:
   mysql:
   redis:
+  postgres:
   
 services:
   web:
     build:
       context: ../../web
       dockerfile: ./Dockerfile
-    container_name: gva-web
+    container_name: resume-web
     restart: always
     ports:
       - '8080:8080'
@@ -33,7 +34,7 @@ services:
     build:
       context: ../../server
       dockerfile: ./Dockerfile
-    container_name: gva-server
+    container_name: resume-server
     restart: always
     ports:
       - '8888:8888'
@@ -51,18 +52,18 @@ services:
 
   mysql:
     image: mysql:8.0.21       # 如果您是 arm64 架构：如 MacOS 的 M1，请修改镜像为 image: mysql/mysql-server:8.0.21
-    container_name: gva-mysql
+    container_name: resume-mysql
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci #设置utf8字符集
     restart: always
     ports:
       - "13306:3306"  # host物理直接映射端口为13306
     environment:
-      #MYSQL_ROOT_PASSWORD: 'Aa@6447985' # root管理员用户密码
-      MYSQL_DATABASE: 'qmPlus' # 初始化启动时要创建的数据库的名称
-      MYSQL_USER: 'gva'
-      MYSQL_PASSWORD: 'Aa@6447985'
+      MYSQL_ROOT_PASSWORD: 'ZZzz@8888' # root管理员用户密码
+      MYSQL_DATABASE: 'resume' # 初始化启动时要创建的数据库的名称
+      MYSQL_USER: 'resume'
+      MYSQL_PASSWORD: 'ZZzz@8888'
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "gva", "-pAa@6447985"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "resume", "-pZZzz@8888"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -74,7 +75,7 @@ services:
 
   redis:
     image: redis:6.0.6
-    container_name: gva-redis # 容器名
+    container_name: resume-redis # 容器名
     restart: always
     ports:
       - '16379:6379'
@@ -88,3 +89,25 @@ services:
     networks:
       network:
         ipv4_address: 177.7.0.14
+
+  postgres:
+    image: postgres:14
+    container_name: resume-postgres
+    restart: always
+    ports:
+      - "15432:5432"  # 映射到主机的15432端口
+    environment:
+      POSTGRES_DB: resume
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ZZzz@8888
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    networks:
+      network:
+        ipv4_address: 177.7.0.15
