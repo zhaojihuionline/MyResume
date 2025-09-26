@@ -282,7 +282,7 @@
     </div>
 
     <!-- 分享对话框 -->
-    <el-dialog title="分享简历" :visible.sync="shareDialogVisible" width="400px">
+    <el-dialog title="分享简历" v-model="shareDialogVisible" width="400px">
       <div class="share-content">
         <p>简历分享链接：</p>
         <el-input 
@@ -290,7 +290,9 @@
           readonly
           class="share-url"
         >
-          <el-button slot="append" @click="copyShareUrl" icon="el-icon-document-copy">复制</el-button>
+          <template #append>
+            <el-button @click="copyShareUrl" icon="el-icon-document-copy">复制</el-button>
+          </template>
         </el-input>
         <p class="share-tip">* 此链接可供招聘方查看您的简历</p>
       </div>
@@ -409,7 +411,7 @@ export default {
     },
     
     shareResume() {
-      this.shareUrl = `${window.location.origin}/resume/public/${this.selectedResumeId}`
+      this.shareUrl = `${window.location.origin}/#/resume/public/${this.selectedResumeId}`
       this.shareDialogVisible = true
     },
     

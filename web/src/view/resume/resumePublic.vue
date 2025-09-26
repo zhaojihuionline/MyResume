@@ -205,7 +205,7 @@
     </div>
 
     <!-- 图片预览对话框 -->
-    <el-dialog :visible.sync="imagePreviewVisible" width="80%" center>
+    <el-dialog v-model="imagePreviewVisible" width="80%" center>
       <img :src="previewImageSrc" style="width: 100%;" alt="预览图片" />
     </el-dialog>
   </div>
