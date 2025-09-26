@@ -20,7 +20,7 @@
         </el-form-item>
 
         <el-form-item label="简历ID" prop="resumeId">
-          <el-select multiple v-model="searchInfo.resumeId" filterable placeholder="请选择简历ID" :clearable="true">
+          <el-select v-model="searchInfo.resumeId" filterable placeholder="请选择简历ID" :clearable="true">
             <el-option v-for="(item, key) in dataSource.resumeId" :key="key" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
@@ -102,7 +102,7 @@
 
         <el-table-column align="left" label="简历ID" prop="resumeId" width="120">
           <template #default="scope">
-            <el-tag v-for="(item, key) in filterDataSource(dataSource.resumeId, scope.row.resumeId)" :key="key">
+            <el-tag v-for="(item, key) in filterDataSource(dataSource.resumeId, [scope.row.resumeId])" :key="key">
               {{ item }}
             </el-tag>
           </template>
@@ -157,7 +157,7 @@
 
       <el-form :model="formData" label-position="top" ref="elFormRef" :rules="rule" label-width="80px">
         <el-form-item label="简历ID:" prop="resumeId">
-          <el-select multiple v-model="formData.resumeId" placeholder="请选择简历ID" filterable style="width:100%"
+          <el-select v-model="formData.resumeId" placeholder="请选择简历ID" filterable style="width:100%"
             :clearable="true">
             <el-option v-for="(item, key) in dataSource.resumeId" :key="key" :label="item.label" :value="item.value" />
           </el-select>
@@ -197,7 +197,7 @@
       <el-descriptions :column="1" border>
         <el-descriptions-item label="简历ID">
           <template #default="scope">
-            <el-tag v-for="(item, key) in filterDataSource(dataSource.resumeId, detailForm.resumeId)" :key="key">
+            <el-tag v-for="(item, key) in filterDataSource(dataSource.resumeId, [detailForm.resumeId])" :key="key">
               {{ item }}
             </el-tag>
           </template>
@@ -276,7 +276,7 @@ const appStore = useAppStore()
 const showAllQuery = ref(false)
 
 // 自动化生成的字典（可能为空）以及字段
-const resume_current_statusOptions = ref([])
+const resumeCurrentStatusOptions = ref([])
 const formData = ref({
   resumeId: undefined,
   companyName: '',
@@ -412,7 +412,7 @@ getTableData()
 
 // 获取需要的字典 可能为空 按需保留
 const setOptions = async () => {
-  resume_current_statusOptions.value = await getDictFunc('resume_current_status')
+  resumeCurrentStatusOptions.value = await getDictFunc('resume_current_status')
 }
 
 // 获取需要的字典 可能为空 按需保留

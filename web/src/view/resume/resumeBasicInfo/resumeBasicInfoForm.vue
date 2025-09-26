@@ -69,7 +69,7 @@ const router = useRouter()
 const btnLoading = ref(false)
 
 const type = ref('')
-const resume_public_statusOptions = ref([])
+const resumePublicStatusOptions = ref([])
 const formData = ref({
             name: '',
             avatar: "",
@@ -113,7 +113,7 @@ const init = async () => {
     } else {
       type.value = 'create'
     }
-    resume_public_statusOptions.value = await getDictFunc('resume_public_status')
+    resumePublicStatusOptions.value = await getDictFunc('resume_public_status')
 }
 
 init()

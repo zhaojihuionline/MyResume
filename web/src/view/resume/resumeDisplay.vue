@@ -137,7 +137,7 @@
               <div v-for="edu in resumeData.education" :key="edu.ID" class="education-item">
                 <div class="education-header">
                   <h3>{{ edu.school }}</h3>
-                  <span class="degree">{{ edu.degree }}</span>
+                  <span class="degree">{{ getDegreeDisplay(edu.degree) }}</span>
                   <span class="major">{{ edu.major }}</span>
                   <span class="duration">
                     {{ formatDate(edu.startDate) }} - {{ formatDate(edu.endDate) }}
@@ -217,7 +217,7 @@
               <div class="section-content">
                 <div v-for="edu in resumeData.education" :key="edu.ID" class="classic-education-item">
                   <div class="education-title">
-                    <strong>{{ edu.degree }} in {{ edu.major }}</strong> - {{ edu.school }}
+                    <strong>{{ getDegreeDisplay(edu.degree) }} in {{ edu.major }}</strong> - {{ edu.school }}
                     <span class="education-date">
                       ({{ formatDate(edu.startDate) }} - {{ formatDate(edu.endDate) }})
                     </span>
@@ -264,6 +264,7 @@ import { getResumeBasicInfoList } from '@/api/resume/resumeBasicInfo'
 import { getResumeWorkExperienceList } from '@/api/resume/resumeWorkExperience'
 import { getResumeEducationList } from '@/api/resume/resumeEducation'
 import { getResumeProjectList } from '@/api/resume/resumeProject'
+import { getDict, showDictLabel } from '@/utils/dictionary'
 
 // 响应式数据
 const resumeList = ref([])
@@ -273,6 +274,7 @@ const currentTheme = ref('modern') // modern, classic
 const shareDialogVisible = ref(false)
 const shareUrl = ref('')
 const loading = ref(false)
+const resumeDegreeTypeOptions = ref([])
 
 // 加载简历列表
 const loadResumeList = async () => {
@@ -388,8 +390,16 @@ const formatDate = (dateString) => {
   return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}`
 }
 
+// 获取学位显示名称
+const getDegreeDisplay = (degree) => {
+  return showDictLabel(resumeDegreeTypeOptions.value, degree) || degree
+}
+
 // 生命周期钩子
-onMounted(() => {
+onMounted(async () => {
+  // 加载字典数据
+  resumeDegreeTypeOptions.value = await getDict('resume_degree_type')
+  
   loadResumeList()
 })
 </script>

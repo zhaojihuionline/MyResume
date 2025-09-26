@@ -24,7 +24,7 @@
        </el-form-item>
       
             <el-form-item label="简历ID" prop="resumeId">
-  <el-select multiple v-model="searchInfo.resumeId" filterable placeholder="请选择简历ID" :clearable="true">
+  <el-select v-model="searchInfo.resumeId" filterable placeholder="请选择简历ID" :clearable="true">
     <el-option v-for="(item,key) in dataSource.resumeId" :key="key" :label="item.label" :value="item.value" />
   </el-select>
 </el-form-item>
@@ -97,8 +97,8 @@
         
             <el-table-column align="left" label="简历ID" prop="resumeId" width="120">
     <template #default="scope">
-        <el-tag v-for="(item,key) in filterDataSource(dataSource.resumeId,scope.row.resumeId)" :key="key">
-             {{ item }}
+        <el-tag v-for="(item,key) in filterDataSource(dataSource.resumeId,[scope.row.resumeId])" :key="key">
+          {{ item }}
         </el-tag>
     </template>
 </el-table-column>
@@ -147,7 +147,7 @@
 
           <el-form :model="formData" label-position="top" ref="elFormRef" :rules="rule" label-width="80px">
             <el-form-item label="简历ID:" prop="resumeId">
-    <el-select multiple v-model="formData.resumeId" placeholder="请选择简历ID" filterable style="width:100%" :clearable="true">
+    <el-select v-model="formData.resumeId" placeholder="请选择简历ID" filterable style="width:100%" :clearable="true">
         <el-option v-for="(item,key) in dataSource.resumeId" :key="key" :label="item.label" :value="item.value" />
     </el-select>
 </el-form-item>
@@ -190,7 +190,7 @@
             <el-descriptions :column="1" border>
                     <el-descriptions-item label="简历ID">
     <template #default="scope">
-        <el-tag v-for="(item,key) in filterDataSource(dataSource.resumeId,detailForm.resumeId)" :key="key">
+        <el-tag v-for="(item,key) in filterDataSource(dataSource.resumeId,[detailForm.resumeId])" :key="key">
              {{ item }}
         </el-tag>
     </template>

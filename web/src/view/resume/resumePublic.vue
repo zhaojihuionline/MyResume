@@ -178,7 +178,7 @@
               <div class="education-header">
                 <h3>{{ edu.school }}</h3>
                 <div class="education-meta">
-                  <span class="degree">{{ edu.degree }}</span>
+                  <span class="degree">{{ getDegreeDisplay(edu.degree) }}</span>
                   <span class="major">{{ edu.major }}</span>
                   <span class="duration">
                     {{ formatDate(edu.startDate) }} - {{ formatDate(edu.endDate) }}
@@ -219,6 +219,7 @@ import { getResumeBasicInfoList } from '@/api/resume/resumeBasicInfo'
 import { getResumeWorkExperienceList } from '@/api/resume/resumeWorkExperience'
 import { getResumeEducationList } from '@/api/resume/resumeEducation'
 import { getResumeProjectList } from '@/api/resume/resumeProject'
+import { getDictFunc, filterDict } from '@/utils/format'
 
 // 路由实例
 const route = useRoute()
@@ -230,6 +231,9 @@ const loading = ref(true)
 const error = ref(null)
 const imagePreviewVisible = ref(false)
 const previewImageSrc = ref('')
+
+// 字典选项
+const resumeDegreeTypeOptions = ref([])
 
 // 加载简历数据
 const loadResumeData = async () => {
@@ -352,8 +356,16 @@ const formatDateTime = (dateString) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
+// 获取学位显示名称
+const getDegreeDisplay = (degree) => {
+  return filterDict(degree, resumeDegreeTypeOptions.value) || degree
+}
+
 // 生命周期钩子
-onMounted(() => {
+onMounted(async () => {
+  // 加载字典数据
+  resumeDegreeTypeOptions.value = await getDictFunc('resume_degree_type')
+  
   resumeId.value = route.params.id
   if (resumeId.value) {
     loadResumeData()

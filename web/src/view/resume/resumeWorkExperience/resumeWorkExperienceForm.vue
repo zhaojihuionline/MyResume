@@ -4,7 +4,7 @@
     <div class="gva-form-box">
       <el-form :model="formData" ref="elFormRef" label-position="right" :rules="rule" label-width="80px">
         <el-form-item label="简历ID:" prop="resumeId">
-    <el-select multiple v-model="formData.resumeId" placeholder="请选择简历ID" filterable style="width:100%" :clearable="true">
+    <el-select v-model="formData.resumeId" placeholder="请选择简历ID" filterable style="width:100%" :clearable="true">
         <el-option v-for="(item,key) in dataSource.resumeId" :key="key" :label="item.label" :value="item.value" />
     </el-select>
 </el-form-item>
@@ -69,7 +69,7 @@ const router = useRouter()
 const btnLoading = ref(false)
 
 const type = ref('')
-const resume_current_statusOptions = ref([])
+const resumeCurrentStatusOptions = ref([])
 const formData = ref({
             resumeId: undefined,
             companyName: '',
@@ -127,7 +127,7 @@ const init = async () => {
     } else {
       type.value = 'create'
     }
-    resume_current_statusOptions.value = await getDictFunc('resume_current_status')
+    resumeCurrentStatusOptions.value = await getDictFunc('resume_current_status')
 }
 
 init()

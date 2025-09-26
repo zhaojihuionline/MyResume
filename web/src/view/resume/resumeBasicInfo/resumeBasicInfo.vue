@@ -240,7 +240,7 @@ const appStore = useAppStore()
 const showAllQuery = ref(false)
 
 // 自动化生成的字典（可能为空）以及字段
-const resume_public_statusOptions = ref([])
+const resumePublicStatusOptions = ref([])
 const formData = ref({
             name: '',
             avatar: "",
@@ -347,7 +347,7 @@ getTableData()
 
 // 获取需要的字典 可能为空 按需保留
 const setOptions = async () =>{
-    resume_public_statusOptions.value = await getDictFunc('resume_public_status')
+    resumePublicStatusOptions.value = await getDictFunc('resume_public_status')
 }
 
 // 获取需要的字典 可能为空 按需保留
