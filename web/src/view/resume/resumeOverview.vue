@@ -228,213 +228,225 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { getResumeBasicInfoList } from '@/api/resume/resumeBasicInfo'
 import { getResumeWorkExperienceList } from '@/api/resume/resumeWorkExperience'
 import { getResumeEducationList } from '@/api/resume/resumeEducation'
 import { getResumeProjectList } from '@/api/resume/resumeProject'
 
-export default {
-  name: 'ResumeOverview',
-  data() {
-    return {
-      resumeStats: {
-        basicInfo: 0,
-        workExperience: 0,
-        projects: 0,
-        education: 0
-      },
-      recentActivities: [],
-      shareDialogVisible: false,
-      publicResumes: [],
-      selectedResumeId: null,
-      shareUrl: '',
-      loading: true
-    }
-  },
-  computed: {
-    hasPublicResume() {
-      return this.publicResumes.length > 0
-    },
-    hasResumeData() {
-      return this.resumeStats.basicInfo > 0
-    }
-  },
-  mounted() {
-    this.loadStatistics()
-    this.loadRecentActivities()
-  },
-  methods: {
-    async loadStatistics() {
-      try {
-        const [basicRes, workRes, eduRes, projectRes] = await Promise.all([
-          getResumeBasicInfoList({ page: 1, pageSize: 1 }),
-          getResumeWorkExperienceList({ page: 1, pageSize: 1 }),
-          getResumeEducationList({ page: 1, pageSize: 1 }),
-          getResumeProjectList({ page: 1, pageSize: 1 })
-        ])
-        
-        this.resumeStats = {
-          basicInfo: basicRes.data.total || 0,
-          workExperience: workRes.data.total || 0,
-          education: eduRes.data.total || 0,
-          projects: projectRes.data.total || 0
-        }
-        
-        // 获取公开简历列表
-        const publicBasicRes = await getResumeBasicInfoList({ 
-          page: 1, 
-          pageSize: 100,
-          isPublic: true 
-        })
-        this.publicResumes = publicBasicRes.data.list || []
-        
-      } catch (error) {
-        console.error('加载统计数据失败:', error)
-      } finally {
-        this.loading = false
-      }
-    },
+// 路由实例
+const router = useRouter()
+
+// 响应式数据
+const resumeStats = reactive({
+  basicInfo: 0,
+  workExperience: 0,
+  projects: 0,
+  education: 0
+})
+
+const recentActivities = ref([])
+const shareDialogVisible = ref(false)
+const publicResumes = ref([])
+const selectedResumeId = ref(null)
+const shareUrl = ref('')
+const loading = ref(true)
+
+// 计算属性
+const hasPublicResume = computed(() => {
+  return publicResumes.value.length > 0
+})
+
+const hasResumeData = computed(() => {
+  return resumeStats.basicInfo > 0
+})
+
+// 加载统计数据
+const loadStatistics = async () => {
+  try {
+    const [basicRes, workRes, eduRes, projectRes] = await Promise.all([
+      getResumeBasicInfoList({ page: 1, pageSize: 1 }),
+      getResumeWorkExperienceList({ page: 1, pageSize: 1 }),
+      getResumeEducationList({ page: 1, pageSize: 1 }),
+      getResumeProjectList({ page: 1, pageSize: 1 })
+    ])
     
-    async loadRecentActivities() {
-      // 模拟最近活动数据，实际项目中可以从后端API获取
-      try {
-        const [basicRes, workRes, eduRes, projectRes] = await Promise.all([
-          getResumeBasicInfoList({ page: 1, pageSize: 5 }),
-          getResumeWorkExperienceList({ page: 1, pageSize: 5 }),
-          getResumeEducationList({ page: 1, pageSize: 5 }),
-          getResumeProjectList({ page: 1, pageSize: 5 })
-        ])
-        
-        const activities = []
-        
-        // 基本信息活动
-        if (basicRes.data.list) {
-          basicRes.data.list.forEach(item => {
-            activities.push({
-              id: `basic_${item.ID}`,
-              type: 'basic',
-              title: '更新基本信息',
-              description: `更新了 ${item.name} 的基本信息`,
-              time: item.UpdatedAt
-            })
-          })
-        }
-        
-        // 工作经历活动
-        if (workRes.data.list) {
-          workRes.data.list.forEach(item => {
-            activities.push({
-              id: `work_${item.ID}`,
-              type: 'work',
-              title: '添加工作经历',
-              description: `添加了在 ${item.companyName} 的 ${item.position} 工作经历`,
-              time: item.UpdatedAt
-            })
-          })
-        }
-        
-        // 教育背景活动
-        if (eduRes.data.list) {
-          eduRes.data.list.forEach(item => {
-            activities.push({
-              id: `edu_${item.ID}`,
-              type: 'education',
-              title: '更新教育背景',
-              description: `添加了 ${item.school} ${item.degree} 学历信息`,
-              time: item.UpdatedAt
-            })
-          })
-        }
-        
-        // 项目经验活动
-        if (projectRes.data.list) {
-          projectRes.data.list.forEach(item => {
-            activities.push({
-              id: `project_${item.ID}`,
-              type: 'project',
-              title: '添加项目经验',
-              description: `添加了项目 ${item.projectName}`,
-              time: item.UpdatedAt
-            })
-          })
-        }
-        
-        // 按时间排序并取前10条
-        this.recentActivities = activities
-          .sort((a, b) => new Date(b.time) - new Date(a.time))
-          .slice(0, 10)
-          
-      } catch (error) {
-        console.error('加载最近活动失败:', error)
-      }
-    },
+    Object.assign(resumeStats, {
+      basicInfo: basicRes.data.total || 0,
+      workExperience: workRes.data.total || 0,
+      education: eduRes.data.total || 0,
+      projects: projectRes.data.total || 0
+    })
     
-    navigateTo(path) {
-      this.$router.push(path)
-    },
+    // 获取公开简历列表
+    const publicBasicRes = await getResumeBasicInfoList({ 
+      page: 1, 
+      pageSize: 100,
+      isPublic: true 
+    })
+    publicResumes.value = publicBasicRes.data.list || []
     
-    showShareDialog() {
-      if (this.publicResumes.length === 1) {
-        this.selectedResumeId = this.publicResumes[0].ID
-        this.updateShareUrl()
-      }
-      this.shareDialogVisible = true
-    },
-    
-    updateShareUrl() {
-      if (this.selectedResumeId) {
-        this.shareUrl = `${window.location.origin}/resume/public/${this.selectedResumeId}`
-      }
-    },
-    
-    copyShareUrl() {
-      navigator.clipboard.writeText(this.shareUrl).then(() => {
-        this.$message.success('链接已复制到剪贴板')
-      }).catch(() => {
-        this.$message.error('复制失败，请手动复制')
-      })
-    },
-    
-    printResume() {
-      this.$router.push('/resume/display')
-    },
-    
-    getActivityIcon(type) {
-      const iconMap = {
-        basic: 'el-icon-user-solid',
-        work: 'el-icon-suitcase',
-        education: 'el-icon-school',
-        project: 'el-icon-folder-opened'
-      }
-      return iconMap[type] || 'el-icon-document'
-    },
-    
-    formatDateTime(dateString) {
-      if (!dateString) return ''
-      const date = new Date(dateString)
-      const now = new Date()
-      const diff = now - date
-      
-      if (diff < 60000) { // 1分钟内
-        return '刚刚'
-      } else if (diff < 3600000) { // 1小时内
-        return `${Math.floor(diff / 60000)}分钟前`
-      } else if (diff < 86400000) { // 24小时内
-        return `${Math.floor(diff / 3600000)}小时前`
-      } else if (diff < 604800000) { // 7天内
-        return `${Math.floor(diff / 86400000)}天前`
-      } else {
-        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-      }
-    }
-  },
-  watch: {
-    selectedResumeId() {
-      this.updateShareUrl()
-    }
+  } catch (error) {
+    console.error('加载统计数据失败:', error)
+  } finally {
+    loading.value = false
   }
 }
+
+// 加载最近活动
+const loadRecentActivities = async () => {
+  // 模拟最近活动数据，实际项目中可以从后端API获取
+  try {
+    const [basicRes, workRes, eduRes, projectRes] = await Promise.all([
+      getResumeBasicInfoList({ page: 1, pageSize: 5 }),
+      getResumeWorkExperienceList({ page: 1, pageSize: 5 }),
+      getResumeEducationList({ page: 1, pageSize: 5 }),
+      getResumeProjectList({ page: 1, pageSize: 5 })
+    ])
+    
+    const activities = []
+    
+    // 基本信息活动
+    if (basicRes.data.list) {
+      basicRes.data.list.forEach(item => {
+        activities.push({
+          id: `basic_${item.ID}`,
+          type: 'basic',
+          title: '更新基本信息',
+          description: `更新了 ${item.name} 的基本信息`,
+          time: item.UpdatedAt
+        })
+      })
+    }
+    
+    // 工作经历活动
+    if (workRes.data.list) {
+      workRes.data.list.forEach(item => {
+        activities.push({
+          id: `work_${item.ID}`,
+          type: 'work',
+          title: '添加工作经历',
+          description: `添加了在 ${item.companyName} 的 ${item.position} 工作经历`,
+          time: item.UpdatedAt
+        })
+      })
+    }
+    
+    // 教育背景活动
+    if (eduRes.data.list) {
+      eduRes.data.list.forEach(item => {
+        activities.push({
+          id: `edu_${item.ID}`,
+          type: 'education',
+          title: '更新教育背景',
+          description: `添加了 ${item.school} ${item.degree} 学历信息`,
+          time: item.UpdatedAt
+        })
+      })
+    }
+    
+    // 项目经验活动
+    if (projectRes.data.list) {
+      projectRes.data.list.forEach(item => {
+        activities.push({
+          id: `project_${item.ID}`,
+          type: 'project',
+          title: '添加项目经验',
+          description: `添加了项目 ${item.projectName}`,
+          time: item.UpdatedAt
+        })
+      })
+    }
+    
+    // 按时间排序并取前10条
+    recentActivities.value = activities
+      .sort((a, b) => new Date(b.time) - new Date(a.time))
+      .slice(0, 10)
+      
+  } catch (error) {
+    console.error('加载最近活动失败:', error)
+  }
+}
+
+// 导航到指定路径
+const navigateTo = (path) => {
+  router.push(path)
+}
+
+// 显示分享对话框
+const showShareDialog = () => {
+  if (publicResumes.value.length === 1) {
+    selectedResumeId.value = publicResumes.value[0].ID
+    updateShareUrl()
+  }
+  shareDialogVisible.value = true
+}
+
+// 更新分享链接
+const updateShareUrl = () => {
+  if (selectedResumeId.value) {
+    shareUrl.value = `${window.location.origin}/resume/public/${selectedResumeId.value}`
+  }
+}
+
+// 复制分享链接
+const copyShareUrl = () => {
+  navigator.clipboard.writeText(shareUrl.value).then(() => {
+    ElMessage.success('链接已复制到剪贴板')
+  }).catch(() => {
+    ElMessage.error('复制失败，请手动复制')
+  })
+}
+
+// 打印简历
+const printResume = () => {
+  router.push('/resume/display')
+}
+
+// 获取活动图标
+const getActivityIcon = (type) => {
+  const iconMap = {
+    basic: 'el-icon-user-solid',
+    work: 'el-icon-suitcase',
+    education: 'el-icon-school',
+    project: 'el-icon-folder-opened'
+  }
+  return iconMap[type] || 'el-icon-document'
+}
+
+// 格式化日期时间
+const formatDateTime = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  const now = new Date()
+  const diff = now - date
+  
+  if (diff < 60000) { // 1分钟内
+    return '刚刚'
+  } else if (diff < 3600000) { // 1小时内
+    return `${Math.floor(diff / 60000)}分钟前`
+  } else if (diff < 86400000) { // 24小时内
+    return `${Math.floor(diff / 3600000)}小时前`
+  } else if (diff < 604800000) { // 7天内
+    return `${Math.floor(diff / 86400000)}天前`
+  } else {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  }
+}
+
+// 监听选中的简历ID变化
+watch(selectedResumeId, () => {
+  updateShareUrl()
+})
+
+// 生命周期钩子
+onMounted(() => {
+  loadStatistics()
+  loadRecentActivities()
+})
 </script>
 
 <style lang="scss" scoped>

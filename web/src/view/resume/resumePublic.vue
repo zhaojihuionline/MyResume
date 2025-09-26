@@ -211,150 +211,157 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { getResumeBasicInfoList } from '@/api/resume/resumeBasicInfo'
 import { getResumeWorkExperienceList } from '@/api/resume/resumeWorkExperience'
 import { getResumeEducationList } from '@/api/resume/resumeEducation'
 import { getResumeProjectList } from '@/api/resume/resumeProject'
 
-export default {
-  name: 'ResumePublic',
-  data() {
-    return {
-      resumeId: null,
-      resumeData: null,
-      loading: true,
-      error: null,
-      imagePreviewVisible: false,
-      previewImageSrc: ''
+// 路由实例
+const route = useRoute()
+
+// 响应式数据
+const resumeId = ref(null)
+const resumeData = ref(null)
+const loading = ref(true)
+const error = ref(null)
+const imagePreviewVisible = ref(false)
+const previewImageSrc = ref('')
+
+// 加载简历数据
+const loadResumeData = async () => {
+  try {
+    // 先获取基本信息并检查是否公开
+    const basicRes = await getResumeBasicInfoList({ 
+      page: 1, 
+      pageSize: 1, 
+      ID: resumeId.value 
+    })
+    
+    if (!basicRes.data.list || basicRes.data.list.length === 0) {
+      error.value = '简历不存在'
+      loading.value = false
+      return
     }
-  },
-  mounted() {
-    this.resumeId = this.$route.params.id
-    if (this.resumeId) {
-      this.loadResumeData()
-    } else {
-      this.error = '无效的简历链接'
-      this.loading = false
+    
+    const basicInfo = basicRes.data.list[0]
+    if (!basicInfo.isPublic) {
+      error.value = '此简历已设为私有，无法公开访问'
+      loading.value = false
+      return
     }
-  },
-  methods: {
-    async loadResumeData() {
+    
+    // 并行加载所有相关数据
+    const [workRes, eduRes, projectRes] = await Promise.all([
+      getResumeWorkExperienceList({ page: 1, pageSize: 100, resumeId: resumeId.value }),
+      getResumeEducationList({ page: 1, pageSize: 100, resumeId: resumeId.value }),
+      getResumeProjectList({ page: 1, pageSize: 100, resumeId: resumeId.value })
+    ])
+    
+    resumeData.value = {
+      basicInfo,
+      workExperience: (workRes.data.list || []).sort((a, b) => b.sortOrder - a.sortOrder),
+      education: eduRes.data.list || [],
+      projects: projectRes.data.list || []
+    }
+    
+    // 处理技能数据
+    if (resumeData.value.basicInfo.skills && typeof resumeData.value.basicInfo.skills === 'string') {
       try {
-        // 先获取基本信息并检查是否公开
-        const basicRes = await getResumeBasicInfoList({ 
-          page: 1, 
-          pageSize: 1, 
-          ID: this.resumeId 
-        })
-        
-        if (!basicRes.data.list || basicRes.data.list.length === 0) {
-          this.error = '简历不存在'
-          this.loading = false
-          return
-        }
-        
-        const basicInfo = basicRes.data.list[0]
-        if (!basicInfo.isPublic) {
-          this.error = '此简历已设为私有，无法公开访问'
-          this.loading = false
-          return
-        }
-        
-        // 并行加载所有相关数据
-        const [workRes, eduRes, projectRes] = await Promise.all([
-          getResumeWorkExperienceList({ page: 1, pageSize: 100, resumeId: this.resumeId }),
-          getResumeEducationList({ page: 1, pageSize: 100, resumeId: this.resumeId }),
-          getResumeProjectList({ page: 1, pageSize: 100, resumeId: this.resumeId })
-        ])
-        
-        this.resumeData = {
-          basicInfo,
-          workExperience: (workRes.data.list || []).sort((a, b) => b.sortOrder - a.sortOrder),
-          education: eduRes.data.list || [],
-          projects: projectRes.data.list || []
-        }
-        
-        // 处理技能数据
-        if (this.resumeData.basicInfo.skills && typeof this.resumeData.basicInfo.skills === 'string') {
-          try {
-            this.resumeData.basicInfo.skills = JSON.parse(this.resumeData.basicInfo.skills)
-          } catch (e) {
-            this.resumeData.basicInfo.skills = []
-          }
-        }
-        
-        // 处理项目技术栈和截图数据
-        this.resumeData.projects.forEach(project => {
-          if (project.technologies && typeof project.technologies === 'string') {
-            try {
-              project.technologies = JSON.parse(project.technologies)
-            } catch (e) {
-              project.technologies = []
-            }
-          }
-          
-          if (project.screenshots && typeof project.screenshots === 'string') {
-            try {
-              project.screenshots = JSON.parse(project.screenshots)
-            } catch (e) {
-              project.screenshots = []
-            }
-          }
-        })
-        
-        // 设置页面标题
-        document.title = `${basicInfo.name}的简历 - MyResume`
-        
-      } catch (error) {
-        console.error('加载简历数据失败:', error)
-        this.error = '加载简历数据失败，请稍后再试'
-      } finally {
-        this.loading = false
+        resumeData.value.basicInfo.skills = JSON.parse(resumeData.value.basicInfo.skills)
+      } catch (e) {
+        resumeData.value.basicInfo.skills = []
       }
-    },
-    
-    printResume() {
-      // 隐藏操作栏
-      const actionBar = document.querySelector('.public-action-bar')
-      if (actionBar) {
-        actionBar.style.display = 'none'
-      }
-      
-      // 打印
-      window.print()
-      
-      // 恢复操作栏
-      setTimeout(() => {
-        if (actionBar) {
-          actionBar.style.display = 'flex'
-        }
-      }, 1000)
-    },
-    
-    downloadPDF() {
-      // 这里可以集成PDF生成库，如jsPDF
-      this.$message.info('PDF下载功能开发中...')
-    },
-    
-    previewImage(src) {
-      this.previewImageSrc = src
-      this.imagePreviewVisible = true
-    },
-    
-    formatDate(dateString) {
-      if (!dateString) return ''
-      const date = new Date(dateString)
-      return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}`
-    },
-    
-    formatDateTime(dateString) {
-      if (!dateString) return ''
-      const date = new Date(dateString)
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
     }
+    
+    // 处理项目技术栈和截图数据
+    resumeData.value.projects.forEach(project => {
+      if (project.technologies && typeof project.technologies === 'string') {
+        try {
+          project.technologies = JSON.parse(project.technologies)
+        } catch (e) {
+          project.technologies = []
+        }
+      }
+      
+      if (project.screenshots && typeof project.screenshots === 'string') {
+        try {
+          project.screenshots = JSON.parse(project.screenshots)
+        } catch (e) {
+          project.screenshots = []
+        }
+      }
+    })
+    
+    // 设置页面标题
+    document.title = `${basicInfo.name}的简历 - MyResume`
+    
+  } catch (err) {
+    console.error('加载简历数据失败:', err)
+    error.value = '加载简历数据失败，请稍后再试'
+  } finally {
+    loading.value = false
   }
 }
+
+// 打印简历
+const printResume = () => {
+  // 隐藏操作栏
+  const actionBar = document.querySelector('.public-action-bar')
+  if (actionBar) {
+    actionBar.style.display = 'none'
+  }
+  
+  // 打印
+  window.print()
+  
+  // 恢复操作栏
+  setTimeout(() => {
+    if (actionBar) {
+      actionBar.style.display = 'flex'
+    }
+  }, 1000)
+}
+
+// 下载PDF
+const downloadPDF = () => {
+  // 这里可以集成PDF生成库，如jsPDF
+  ElMessage.info('PDF下载功能开发中...')
+}
+
+// 预览图片
+const previewImage = (src) => {
+  previewImageSrc.value = src
+  imagePreviewVisible.value = true
+}
+
+// 格式化日期
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}`
+}
+
+// 格式化日期时间
+const formatDateTime = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
+// 生命周期钩子
+onMounted(() => {
+  resumeId.value = route.params.id
+  if (resumeId.value) {
+    loadResumeData()
+  } else {
+    error.value = '无效的简历链接'
+    loading.value = false
+  }
+})
 </script>
 
 <style lang="scss" scoped>
