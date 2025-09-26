@@ -25,6 +25,24 @@ const routes = [
     component: () => import('@/view/example/upload/scanUpload.vue')
   },
   {
+    path: '/resume/public/:id',
+    name: 'ResumePublic',
+    meta: {
+      title: '简历展示',
+      client: true
+    },
+    component: () => import('@/view/resume/resumePublic.vue')
+  },
+  {
+    path: '/resume/display',
+    name: 'ResumeDisplay',
+    meta: {
+      title: '我的简历',
+      requireAuth: true
+    },
+    component: () => import('@/view/resume/resumeDisplay.vue')
+  },
+  {
     path: '/:catchAll(.*)',
     meta: {
       closeTab: true
