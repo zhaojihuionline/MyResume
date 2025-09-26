@@ -187,7 +187,7 @@
     </div>
 
     <!-- 分享对话框 -->
-    <el-dialog title="分享简历" :visible.sync="shareDialogVisible" width="500px">
+    <el-dialog title="分享简历" v-model="shareDialogVisible" width="500px">
       <div class="share-dialog-content">
         <div class="resume-selector" v-if="publicResumes.length > 1">
           <h4>选择要分享的简历：</h4>
@@ -208,7 +208,9 @@
             readonly
             class="share-url-input"
           >
-            <el-button slot="append" @click="copyShareUrl" icon="el-icon-document-copy">复制</el-button>
+            <template #append>
+              <el-button @click="copyShareUrl" icon="el-icon-document-copy">复制</el-button>
+            </template>
           </el-input>
           <p class="share-tip">
             <i class="el-icon-info"></i>
@@ -382,7 +384,7 @@ export default {
     
     updateShareUrl() {
       if (this.selectedResumeId) {
-        this.shareUrl = `${window.location.origin}/#/resume/public/${this.selectedResumeId}`
+        this.shareUrl = `${window.location.origin}/resume/public/${this.selectedResumeId}`
       }
     },
     

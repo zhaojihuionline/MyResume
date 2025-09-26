@@ -411,7 +411,7 @@ export default {
     },
     
     shareResume() {
-      this.shareUrl = `${window.location.origin}/#/resume/public/${this.selectedResumeId}`
+      this.shareUrl = `${window.location.origin}/resume/public/${this.selectedResumeId}`
       this.shareDialogVisible = true
     },
     
